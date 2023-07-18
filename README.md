@@ -1,4 +1,4 @@
-# Fee & Payments Slack help bot 
+# Task Management Slack help bot 
 
 Listens for new posts in a designated Slack channel and raises a coresponding request in Jira.
 

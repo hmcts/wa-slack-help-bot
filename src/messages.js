@@ -343,6 +343,31 @@ function openHelpRequestBlocks() {
             },
             {
                 "type": "input",
+                "block_id": "category",
+                "element": {
+                    "type": "static_select",
+                    "placeholder": {
+                        "type": "plain_text",
+                        "text": "Select a category",
+                        "emoji": true
+                    },
+                    "options": [
+                        option('Onboarding'),
+                        option('Potential Bug', 'bug'),
+                        option('Access Issues', 'access'),
+                        option('Testing'),
+                        option('Other')
+                    ],
+                    "action_id": "category"
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "Request category",
+                    "emoji": true
+                }
+            },
+            {
+                "type": "input",
                 "block_id": "references",
                 "element": {
                     "type": "plain_text_input",

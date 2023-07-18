@@ -85,7 +85,7 @@ const server = http.createServer((req, res) => {
         }
         res.end('OK');
     } else if (req.url === '/health/readiness') {
-        res.end(`<h1>ccpay-slack-help-bot</h1>`)
+        res.end(`<h1>wa-slack-help-bot</h1>`)
     } else if (req.url === '/health/error') {
         // Dummy error page
         res.statusCode = 500;
@@ -343,7 +343,8 @@ app.shortcut('launch_shortcut', async ({ shortcut, body, ack, context, client })
 function extractLabels(values) {
     const priority = `priority-${values.priority.priority.selected_option.value}`
     const team = `team-${values.team.team.selected_option.value}`
-    return [priority, team];
+    const category = `category-${values.category.category.selected_option.value}`
+    return [priority, team, category];
 }
 
 app.view('create_help_request', async ({ ack, body, view, client }) => {
@@ -366,6 +367,7 @@ app.view('create_help_request', async ({ ack, body, view, client }) => {
         const helpRequest = {
             user,
             summary: view.state.values.summary.title.value,
+            category: view.state.values.category.category.selected_option.text.text,
             priority: view.state.values.priority.priority.selected_option.text.text,
             references: view.state.values.references?.references?.value || "None",
             environment: view.state.values.environment.environment.selected_option?.text.text || "None",
@@ -483,7 +485,7 @@ app.event('app_mention', async ({ event, context, client, say }) => {
 
                 } else {
                     await say({
-                        text: `Hi <@${event.user}>, if you want to escalate a request please tag \`cc-payments\`, to see what else I can do reply back with \`help\``,
+                        text: `Hi <@${event.user}>, if you want to escalate a request please tag \`tm-support\`, to see what else I can do reply back with \`help\``,
                         thread_ts: event.thread_ts
                     });
                 }
