@@ -293,7 +293,7 @@ function openHelpRequestBlocks() {
     return {
         "title": {
             "type": "plain_text",
-            "text": "F&P Support request"
+            "text": "Task Management Support request"
         },
         "submit": {
             "type": "plain_text",
