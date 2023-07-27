@@ -170,9 +170,7 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             reporter: {
                 name: user // API docs say ID, but our jira version doesn't have that field yet, may need to change in future
             },
-            customfield_10007: [
-                "com.atlassian.greenhopper.service.sprint.Sprint@645f4e3c[id=10029,rapidViewId=1421,state=FUTURE,name=PET ticket backlog,startDate=<null>,endDate=<null>,completeDate=<null>,activatedDate=<null>,sequence=10029,goal=<null>,autoStartStop=false,synced=false]"
-            ], // sprint - not ideal!
+            customfield_10007: 10029, // sprint
             customfield_10008: "RWA-695" // epic
         }
     });
