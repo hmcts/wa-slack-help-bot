@@ -156,7 +156,7 @@ async function convertEmail(email) {
 
 async function createHelpRequestInJira(summary, project, user, labels) {
     console.log(`Creating help request in Jira for user: ${user}`)
-    return await jira.addNewIssue({
+    const issue = await jira.addNewIssue({
         fields: {
             summary: summary,
             issuetype: {
@@ -169,9 +169,25 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             description: undefined,
             reporter: {
                 name: user // API docs say ID, but our jira version doesn't have that field yet, may need to change in future
-            }
+            },
+            customfield_10007: [
+                "com.atlassian.greenhopper.service.sprint.Sprint@645f4e3c[id=10029,rapidViewId=1421,state=FUTURE,name=PET ticket backlog,startDate=<null>,endDate=<null>,completeDate=<null>,activatedDate=<null>,sequence=10029,goal=<null>,autoStartStop=false,synced=false]"
+            ], // sprint - not ideal!
+            customfield_10008: "RWA-695" // epic
         }
     });
+
+    try {
+        await jira.transitionIssue(issue.key, {
+            transition: {
+                id: "141" // Move to "To be Refined"
+            }
+        })
+    } catch (err) {
+        console.log("Unable to transition new issue", err)
+    }
+
+    return issue;
 }
 
 async function createHelpRequest({
