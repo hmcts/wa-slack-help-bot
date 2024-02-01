@@ -14,6 +14,3 @@ jira:
   # username: no default
   # api_token: no default
 
-app_insights:
-  # instrumentation_key: no default
-  role_name: wa-slack-help-bot

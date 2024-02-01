@@ -16,8 +16,7 @@ const {
     resolveHelpRequestBlocks,
     helpRequestDocumentation,
 } = require("./src/messages");
-const { App, LogLevel, SocketModeReceiver, WorkflowStep } = require('@slack/bolt');
-const crypto = require('crypto')
+const { App, WorkflowStep } = require('@slack/bolt');
 const {
     addCommentToHelpRequestResolve,
     addCommentToHelpRequest,
@@ -31,9 +30,6 @@ const {
     updateHelpRequestDescription,
     getIssueDescription, markAsDuplicate
 } = require("./src/service/persistence");
-const appInsights = require('./src/modules/appInsights')
-
-appInsights.enableAppInsights()
 
 const app = new App({
     token: config.get('slack.bot_token'), //disable this if enabling OAuth in socketModeReceiver
@@ -85,7 +81,7 @@ const server = http.createServer((req, res) => {
         }
         res.end('OK');
     } else if (req.url === '/health/readiness') {
-        res.end(`<h1>wa-slack-help-bot</h1>`)
+        res.end(`<h1>am-slack-help-bot</h1>`)
     } else if (req.url === '/health/error') {
         // Dummy error page
         res.statusCode = 500;
@@ -219,8 +215,6 @@ const ws = new WorkflowStep('superbot_help_request', {
             team: inputs.team.value || "None",
             description: inputs.desc.value,
             analysis: inputs.alsys.value,
-            replicateSteps: inputs.replicateSteps.value,
-            testAccount: inputs.testAccount.value,
             references: inputs.references.value
         }
 
@@ -373,8 +367,6 @@ app.view('create_help_request', async ({ ack, body, view, client }) => {
             environment: view.state.values.environment.environment.selected_option?.text.text || "None",
             description: view.state.values.description.description.value,
             analysis: view.state.values.analysis.analysis.value,
-            replicateSteps: view.state.values.replicateSteps.replicateSteps.value,
-            testAccount: view.state.values.testAccount.testAccount.value,
         }
 
         const jiraId = await createHelpRequest({
@@ -485,7 +477,7 @@ app.event('app_mention', async ({ event, context, client, say }) => {
 
                 } else {
                     await say({
-                        text: `Hi <@${event.user}>, if you want to escalate a request please tag \`tm-support\`, to see what else I can do reply back with \`help\``,
+                        text: `Hi <@${event.user}>, if you want to escalate a request please tag \`accessmanagement-support\`, to see what else I can do reply back with \`help\``,
                         thread_ts: event.thread_ts
                     });
                 }
