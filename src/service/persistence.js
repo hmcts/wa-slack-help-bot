@@ -170,16 +170,6 @@ async function createHelpRequestInJira(summary, project, user, labels) {
         }
     });
 
-    // try {
-    //     await jira.transitionIssue(issue.key, {
-    //         transition: {
-    //             id: "141" // Move to "To be Refined"
-    //         }
-    //     })
-    // } catch (err) {
-    //     console.log("Unable to transition new issue", err)
-    // }
-
     return issue;
 }
 
