@@ -51,8 +51,6 @@ function helpRequestRaised({
     priority,
     environment,
     references,
-    replicateSteps,
-    testAccount,
     jiraId
 }) {
     return [
@@ -293,7 +291,7 @@ function openHelpRequestBlocks() {
     return {
         "title": {
             "type": "plain_text",
-            "text": "TM Support request"
+            "text": "AM Support Request"
         },
         "submit": {
             "type": "plain_text",
@@ -352,7 +350,7 @@ function openHelpRequestBlocks() {
                         "emoji": true
                     },
                     "options": [
-                        option('Onboarding'),
+                        option('Change'),
                         option('Potential Bug', 'bug'),
                         option('Access Issues', 'access'),
                         option('Testing'),
@@ -369,12 +367,13 @@ function openHelpRequestBlocks() {
             {
                 "type": "input",
                 "block_id": "references",
+                "optional": true,
                 "element": {
                     "type": "plain_text_input",
                     "action_id": "references",
                     "placeholder": {
                         "type": "plain_text",
-                        "text": "Related Jira References..."
+                        "text": "Related Jira/SNow References..."
                     }
                 },
                 "label": {
@@ -420,38 +419,6 @@ function openHelpRequestBlocks() {
                 "label": {
                     "type": "plain_text",
                     "text": "Issue description",
-                    "emoji": true
-                }
-            },
-            {
-                "type": "input",
-                "block_id": "replicateSteps",
-                "element": {
-                    "type": "plain_text_input",
-                    "multiline": true,
-                    "action_id": "replicateSteps"
-                },
-                "label": {
-                    "type": "plain_text",
-                    "text": "Steps to replicate",
-                    "emoji": true
-                }
-            },
-            {
-                "type": "input",
-                "block_id": "testAccount",
-                "element": {
-                    "type": "plain_text_input",
-                    "multiline": false,
-                    "action_id": "testAccount",
-                    "placeholder": {
-                        "type": "plain_text",
-                        "text": "Username / Password used to replicate issue"
-                    }
-                },
-                "label": {
-                    "type": "plain_text",
-                    "text": "Test account",
                     "emoji": true
                 }
             },

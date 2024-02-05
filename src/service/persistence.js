@@ -167,23 +167,8 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             },
             labels: ['created-from-slack', ...labels],
             description: undefined,
-            reporter: {
-                name: user // API docs say ID, but our jira version doesn't have that field yet, may need to change in future
-            },
-            customfield_10007: 10029, // sprint
-            customfield_10008: "RWA-695" // epic
         }
     });
-
-    try {
-        await jira.transitionIssue(issue.key, {
-            transition: {
-                id: "141" // Move to "To be Refined"
-            }
-        })
-    } catch (err) {
-        console.log("Unable to transition new issue", err)
-    }
 
     return issue;
 }

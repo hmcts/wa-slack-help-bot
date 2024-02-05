@@ -7,9 +7,7 @@ function optionalField(prefix, value) {
 
 function mapFieldsToDescription(
     {
-        replicateSteps,
         references,
-        testAccount,
         environment,
         description,
         analysis,
@@ -25,12 +23,6 @@ ${optionalField('Environment', environment)}
 *Issue description*
 
 ${description}
-
-*Steps to replicate*
-
-${replicateSteps}
-
-*Test Account*: ${testAccount}
 
 *Analysis done so far*: 
 ${analysis}
