@@ -165,7 +165,7 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             project: {
                 id: project.id
             },
-            labels: ['created-from-slack', ...labels],
+            labels: ['created-from-slack', 'AM', 'AM_DTS_SUPPORT', ...labels],
             description: undefined,
         }
     });
