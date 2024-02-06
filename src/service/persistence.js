@@ -167,6 +167,9 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             },
             labels: ['created-from-slack', 'AM', 'AM_DTS_SUPPORT', ...labels],
             description: undefined,
+            fixVersions: [ { name: "No Release Required" } ],
+            components: [ { name: "No Components" } ],
+            customfield_10004: 0, // default story point to 0
         }
     });
 
