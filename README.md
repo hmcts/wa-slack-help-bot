@@ -1,6 +1,7 @@
-# Task Management Slack help bot 
+# Access Management Slack help bot 
+(Slack app name: Albert)
 
-Listens for new posts in a designated Slack channel and raises a coresponding request in Jira.
+Listens for new posts in a designated Slack channel and raises a corresponding request in Jira.
 
 ## Creating the Slack App 
 <details>
