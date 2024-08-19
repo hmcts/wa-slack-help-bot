@@ -326,10 +326,10 @@ function openHelpRequestBlocks() {
                         "emoji": true
                     },
                     "options": [
-                        option('Highest'),
-                        option('High'),
-                        option('Medium'),
-                        option('Low'),
+                        option('1-Highest'),
+                        option('2-High'),
+                        option('3-Medium'),
+                        option('4-Low'),
                     ],
                     "action_id": "priority"
                 },
