@@ -170,6 +170,11 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             fixVersions: [ { name: "No Release Required" } ],
             components: [ { name: "No Components" } ],
             customfield_10004: 0, // default story point to 0
+            reporter: {
+                name: user // API docs say ID, but our jira version doesn't have that field yet, may need to change in future
+            },
+            customfield_10008: "RWA-3159", // epic
+            customfield_16500: { value: "M" }
         }
     });
 
