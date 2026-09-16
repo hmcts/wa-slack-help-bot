@@ -222,18 +222,29 @@ async function createHelpRequestInJira(summary, project, user, labels) {
     return issue;
 }
 
-async function createHelpRequest(helpRequest, userEmail, issueType = JiraType.ISSUE.id) {
-    const userAccountId = await convertEmail(userEmail);
+async function createHelpRequest({
+                                     summary,
+                                     userEmail,
+                                     labels
+                                 }) {
+    const user = await convertEmail(userEmail)
+
     const project = await jira.getProject(jiraProject);
 
-    const result = await createHelpRequestInJira(
-        helpRequest,
-        project,
-        userAccountId,
-        issueType
-    );
 
-    return result.key;
+    let result
+    try {
+        result = await createHelpRequestInJira(summary, project, user, labels);
+    } catch(err) {
+        // in case the user doesn't exist in Jira use the system user
+        result = await createHelpRequestInJira(summary, project, systemUser, labels);
+
+        if (!result.key) {
+            console.log("Error creating help request in jira", JSON.stringify(result));
+        }
+    }
+
+    return result.key
 }
 
 async function updateHelpRequestDescription(issueId, fields) {
