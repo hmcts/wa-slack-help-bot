@@ -2,8 +2,8 @@ const JiraApi = require('jira-client');
 const config = require('config')
 const {createComment, mapFieldsToDescription, createResolveComment} = require("./jiraMessages");
 
-const systemUser = config.get('jira.username')
 
+const jiraCloudId = config.get('jira.cloud_id')
 const issueTypeId = config.get('jira.issue_type_id')
 const issueTypeName = config.get('jira.issue_type_name')
 
@@ -13,10 +13,38 @@ const jiraStartTransitionId = config.get('jira.start_transition_id')
 const jiraDoneTransitionId = config.get('jira.done_transition_id')
 const extractProjectRegex = new RegExp(`(${jiraProject}-[\\d]+)`)
 
+let systemAccountId;
+let systemAccountIdPromise;
+
+async function getSystemAccountId() {
+    if (systemAccountId) return systemAccountId;
+
+    if (!systemAccountIdPromise) {
+        systemAccountIdPromise = jira.getCurrentUser()
+            .then((user) => {
+                if (!user?.accountId) {
+                    throw new Error("Jira service account has no accountId");
+                }
+
+                systemAccountId = user.accountId;
+                return systemAccountId;
+            })
+            .catch((err) => {
+                systemAccountIdPromise = undefined;
+                console.error("Unable to resolve Jira service account ID", err);
+                throw err;
+            });
+    }
+
+    return systemAccountIdPromise;
+}
+
 const jira = new JiraApi({
     protocol: 'https',
-    host: 'tools.hmcts.net/jira',
-    bearer: config.get('jira.api_token'),
+    host: 'api.atlassian.com',
+    base: `/ex/jira/${jiraCloudId}`,
+    username: config.get('jira.username'),
+    password: config.get('jira.api_token'),
     apiVersion: '2',
     strictSSL: true
 });
@@ -104,19 +132,19 @@ async function searchForUnassignedOpenIssues() {
 }
 
 async function assignHelpRequest(issueId, email) {
-    const user = await convertEmail(email)
+    const accountId = await convertEmail(email);
 
     try {
-        await jira.updateAssignee(issueId, user)
-    } catch(err) {
-        console.log("Error assigning help request in jira", err)
+        await jira.updateAssigneeWithId(issueId, accountId);
+    } catch (err) {
+        console.log("Error assigning help request in Jira", err);
     }
 }
 
 /**
  * Extracts a jira ID
  *
- * expected format: 'View on Jira: <https://tools.hmcts.net/jira/browse/SBOX-61|SBOX-61>'
+ * expected format: 'View on Jira: <https://hmcts.atlassian.net/browse/SBOX-61|SBOX-61>'
  * @param blocks
  */
 function extractJiraIdFromBlocks(blocks) {
@@ -138,21 +166,27 @@ function extraJiraId(text) {
 
 async function convertEmail(email) {
     if (!email) {
-        return systemUser
+        return getSystemAccountId();
     }
 
     try {
-        res = await jira.searchUsers(options = {
-            username: email,
+        const users = await jira.searchUsers({
+            query: email,
             maxResults: 1
-        })
+        });
 
-        return res[0].name
-    } catch(ex) {
-        console.log("Querying username failed: " + ex)
-        return systemUser
+        if (!users?.[0]?.accountId) {
+            console.log('Jira user not found; using service account as reporter');
+            return getSystemAccountId();
+        }
+
+        return users[0].accountId;
+    } catch (err) {
+        console.log('Jira user lookup failed; using service account as reporter', err);
+        return getSystemAccountId();
     }
 }
+
 
 async function createHelpRequestInJira(summary, project, user, labels) {
     console.log(`Creating help request in Jira for user: ${user}`)
@@ -168,7 +202,7 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             labels: ['created-from-slack', ...labels],
             description: undefined,
             reporter: {
-                name: user // API docs say ID, but our jira version doesn't have that field yet, may need to change in future
+                accountId: user
             },
             customfield_10008: "RWA-3159", // epic
             customfield_16500: { value: "M" }
@@ -188,31 +222,18 @@ async function createHelpRequestInJira(summary, project, user, labels) {
     return issue;
 }
 
-async function createHelpRequest({
-                                     summary,
-                                     userEmail,
-                                     labels
-                                 }) {
-    const user = await convertEmail(userEmail)
-
+async function createHelpRequest(helpRequest, userEmail, issueType = JiraType.ISSUE.id) {
+    const userAccountId = await convertEmail(userEmail);
     const project = await jira.getProject(jiraProject);
 
-    // https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-post
-    // note: fields don't match 100%, our Jira version is a bit old (still a supported LTS though)
+    const result = await createHelpRequestInJira(
+        helpRequest,
+        project,
+        userAccountId,
+        issueType
+    );
 
-    let result
-    try {
-        result = await createHelpRequestInJira(summary, project, user, labels);
-    } catch(err) {
-        // in case the user doesn't exist in Jira use the system user
-        result = await createHelpRequestInJira(summary, project, systemUser, labels);
-
-        if (!result.key) {
-            console.log("Error creating help request in jira", JSON.stringify(result));
-        }
-    }
-
-    return result.key
+    return result.key;
 }
 
 async function updateHelpRequestDescription(issueId, fields) {
