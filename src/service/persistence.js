@@ -222,7 +222,7 @@ async function createHelpRequestInJira(summary, project, userId, labels) {
         }
 
         console.log(`Unable to create help request as user ${userId}; retrying as system user`, err);
-        console.log(`System user ID: ${systemUserId} and user ID: ${userId}`);
+        console.log(`System user ID: ${systemUserId} name ${jira.username} and user ID: ${userId}`);
         issue = await createIssue(systemUserId);
     }
 
