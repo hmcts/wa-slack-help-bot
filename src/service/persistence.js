@@ -236,7 +236,7 @@ async function createHelpRequest({
         project,
         user,
         labels)
-    );
+    
     return result.key;
 }
 
