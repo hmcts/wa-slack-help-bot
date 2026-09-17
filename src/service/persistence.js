@@ -191,8 +191,7 @@ async function convertEmail(email) {
 async function createHelpRequestInJira(summary, project, user, labels) {
     console.log(`Creating help request in Jira for user: ${user}`)
     //Print URL and all input parameters for debugging purpose
-    console.log(`Jira URL: ${jira.protocol}: Jira Host: ${jira.host} Jira Base: ${jira.base} Summary: ${summary}
-        Project ID: ${project.id} User: ${user} Labels: ${labels} Issue Type ID: ${issueTypeId}`);
+    console.log(`Jira URL: ${jira.protocol}: Jira Host: ${jira.host} Jira Base: ${jira.base} Summary: ${summary} Project ID: ${project.id} User: ${user} Labels: ${labels} Issue Type ID: ${issueTypeId}`);
     const issue = await jira.addNewIssue({
         fields: {
             summary: summary,
