@@ -179,7 +179,7 @@ async function convertEmail(email) {
             console.log('Jira user not found; using service account as reporter');
             return getSystemAccountId();
         }
-
+        console.log(`Jira user found for email ${email}: ${users[0].accountId}`);
         return users[0].accountId;
     } catch (err) {
         console.log('Jira user lookup failed; using service account as reporter', err);
@@ -190,6 +190,8 @@ async function convertEmail(email) {
 
 async function createHelpRequestInJira(summary, project, user, labels) {
     console.log(`Creating help request in Jira for user: ${user}`)
+    //Print URL and all input parameters for debugging purpose
+    console.log(`Jira URL: ${jira.protocol}: Jira Host: ${jira.host} Jira Base: ${jira.base} Summary: ${summary} Project ID: ${project.id} User: ${user} Labels: ${labels} Issue Type ID: ${issueTypeId}`);
     const issue = await jira.addNewIssue({
         fields: {
             summary: summary,
