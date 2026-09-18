@@ -188,12 +188,9 @@ async function convertEmail(email) {
 }
 
 
-async function createHelpRequestInJira(summary, project, userId, labels) {
-    console.log(`Creating help request in Jira for user: ${userId}`)
-    //Print URL and all input parameters for debugging purpose
-    console.log(`Jira URL: ${jira.protocol}: Jira Host: ${jira.host} Jira Base: ${jira.base} Summary: ${summary} Project ID: ${project.id} User: ${userId} Labels: ${labels} Issue Type ID: ${issueTypeId}`);
-
-    const createIssue = (reporterId) => jira.addNewIssue({
+async function createHelpRequestInJira(summary, project, user, labels) {
+    console.log(`Creating help request in Jira for user: ${user}`)
+    const issue = await jira.addNewIssue({
         fields: {
             summary: summary,
             issuetype: {
@@ -205,26 +202,12 @@ async function createHelpRequestInJira(summary, project, userId, labels) {
             labels: ['created-from-slack', ...labels],
             description: undefined,
             reporter: {
-                accountId: reporterId
+                accountId: user
             },
             customfield_10008: "RWA-3159", // epic
-            customfield_16500: { value: "M" }
+            customfield_10383: { value: "M" }
         }
     });
-
-    let issue;
-    try {
-        issue = await createIssue(userId);
-    } catch (err) {
-        const systemUserId = await getSystemAccountId();
-        if (userId === systemUserId) {
-            throw err;
-        }
-
-        console.log(`Unable to create help request as user ${userId}; retrying as system user`, err);
-        console.log(`System user ID: ${systemUserId} name ${jira.username} and user ID: ${userId}`);
-        issue = await createIssue(systemUserId);
-    }
 
     try {
         await jira.transitionIssue(issue.key, {
