@@ -179,7 +179,6 @@ async function convertEmail(email) {
             console.log('Jira user not found; using service account as reporter');
             return getSystemAccountId();
         }
-        console.log(`Jira user found for email ${email}: ${users[0].accountId}`);
         return users[0].accountId;
     } catch (err) {
         console.log('Jira user lookup failed; using service account as reporter', err);
@@ -204,9 +203,7 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             reporter: {
                 accountId: user
             },
-            parent: {
-                key: "RWA-3159"
-            },
+            customfield_10011: "RWA-3159",
             customfield_10383: { value: "M" }
         }
     });
@@ -238,7 +235,7 @@ async function createHelpRequest({
         project,
         user,
         labels)
-    
+
     return result.key;
 }
 
