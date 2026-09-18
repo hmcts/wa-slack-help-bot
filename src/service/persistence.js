@@ -205,6 +205,9 @@ async function createHelpRequestInJira(summary, project, user, labels) {
                 accountId: user
             },
             customfield_10008: "RWA-3159", // epic
+            parent: {
+                key: "RWA-3159"
+            },
             customfield_10383: { value: "M" }
         }
     });
