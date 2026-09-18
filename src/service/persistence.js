@@ -203,7 +203,9 @@ async function createHelpRequestInJira(summary, project, user, labels) {
             reporter: {
                 accountId: user
             },
-            customfield_10011: "RWA-3159",
+            parent: {
+                key: "RWA-3159"
+            },
             customfield_10383: { value: "M" }
         }
     });
