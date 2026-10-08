@@ -709,6 +709,18 @@ app.action('assign_help_request_to_user', async ({
 
         await assignHelpRequest(jiraId, userEmail)
 
+        const blocks = body.message.blocks
+        const userSelect = blocks.flatMap(block => block.elements || [])
+            .find(element => element.action_id === 'assign_help_request_to_user')
+        userSelect.initial_user = user
+
+        await client.chat.update({
+            channel: body.channel.id,
+            ts: body.message.ts,
+            text: body.message.text,
+            blocks: blocks
+        });
+
         const actor = body.user.id
 
         await client.chat.postMessage({
