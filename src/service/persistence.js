@@ -148,16 +148,15 @@ async function assignHelpRequest(issueId, email) {
  * @param blocks
  */
 function extractJiraIdFromBlocks(blocks) {
-    let viewOnJiraText
-    if (blocks.length === 3) {
-        viewOnJiraText = blocks[2].fields[0].text
-    } else {
-        viewOnJiraText = blocks[4].elements[0].text
-    }
-
-    project = extractProjectRegex.exec(viewOnJiraText);
-
-    return (project) ? project[1] : 'undefined';
+    // Find the Jira link by content, as EM does, across both ticket layouts.
+    const elements = (blocks || []).flatMap(block => [
+        ...(block.elements || []),
+        ...(block.fields || [])
+    ]);
+    const jiraLink = elements.find(element => typeof element.text === 'string' &&
+        /^\*?View on Jira\*?:/.test(element.text));
+    const project = jiraLink && extractProjectRegex.exec(jiraLink.text);
+    return project ? project[1] : 'undefined';
 }
 
 function extraJiraId(text) {
@@ -257,11 +256,8 @@ async function updateHelpRequestDescription(issueId, fields) {
 }
 
 async function addCommentToHelpRequest(externalSystemId, fields) {
-    try {
-        await jira.addComment(externalSystemId, createComment(fields))
-    } catch (err) {
-        console.log("Error creating comment in jira", err)
-    }
+    // Let the Slack handler log the failed write with its issue and thread IDs.
+    await jira.addComment(externalSystemId, createComment(fields))
 }
 
 async function addCommentToHelpRequestResolve(externalSystemId, { what, where, how} ) {

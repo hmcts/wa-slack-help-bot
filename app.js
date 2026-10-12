@@ -762,14 +762,20 @@ function convertProfileToName(profile) {
     if (!name) {
         name = profile.real_name_normalized;
     }
-    return name;
+    return name || profile.email;
 }
 
 app.event('message', async ({ event, context, client, say }) => {
+    let jiraId;
     try {
+        // Forward new human replies, excluding bot messages and edit/delete events.
+        if (event.bot_id || !event.user || typeof event.text !== 'string' ||
+            (event.subtype && !['file_share', 'thread_broadcast'].includes(event.subtype))) {
+            return;
+        }
         // filter unwanted channels in case someone invites the bot to it
         // and only look at threaded messages
-        if (event.channel === reportChannelId && event.thread_ts) {
+        if (event.channel === reportChannelId && event.thread_ts && event.ts !== event.thread_ts) {
             const slackLink = (await client.chat.getPermalink({
                 channel: event.channel,
                 'message_ts': event.thread_ts
@@ -782,16 +788,15 @@ app.event('message', async ({ event, context, client, say }) => {
             const name = convertProfileToName(user.profile);
 
             const helpRequestMessages = (await client.conversations.replies({
-                channel: reportChannelId,
+                channel: event.channel,
                 ts: event.thread_ts,
                 limit: 200, // after a thread is 200 long we'll break but good enough for now
             })).messages
 
-            if (helpRequestMessages.length > 0 && (
-                helpRequestMessages[0].text === 'New support request raised' ||
-                helpRequestMessages[0].text === 'Duplicate issue')
-            ) {
-                const jiraId = extractJiraIdFromBlocks(helpRequestMessages[0].blocks)
+            if (helpRequestMessages.length > 0) {
+                jiraId = extractJiraIdFromBlocks(helpRequestMessages[0].blocks)
+                // Match EM's content-based detection without posting ordinary channel threads.
+                if (jiraId === 'undefined') return;
 
                 const groupRegex = /<!subteam\^.+\|([^>.]+)>/g
                 const usernameRegex = /<@([^>.]+)>/g
@@ -816,6 +821,14 @@ app.event('message', async ({ event, context, client, say }) => {
             }
         }
     } catch (error) {
-        console.error(error);
+        console.error('Unable to post Slack thread comment to Jira', {
+            channel: event.channel,
+            thread_ts: event.thread_ts,
+            message_ts: event.ts,
+            jiraId,
+            error: error.message,
+            statusCode: error.statusCode,
+            slackError: error.data?.error
+        });
     }
 })
