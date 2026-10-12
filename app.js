@@ -795,7 +795,6 @@ app.event('message', async ({ event, context, client, say }) => {
 
             if (helpRequestMessages.length > 0) {
                 jiraId = extractJiraIdFromBlocks(helpRequestMessages[0].blocks)
-                // Match EM's content-based detection without posting ordinary channel threads.
                 if (jiraId === 'undefined') return;
 
                 const groupRegex = /<!subteam\^.+\|([^>.]+)>/g
