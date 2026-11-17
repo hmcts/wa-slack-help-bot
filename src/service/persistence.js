@@ -256,32 +256,11 @@ async function updateHelpRequestDescription(issueId, fields) {
     }
 }
 
-async function addCommentToHelpRequest(externalSystemId, fields, logContext = {}) {
-    const commentContext = { ...logContext, jiraId: externalSystemId };
-    console.log('jira_comment_start', commentContext);
+async function addCommentToHelpRequest(externalSystemId, fields) {
     try {
-        const comment = await jira.addComment(externalSystemId, createComment(fields))
-        console.log('jira_comment_created', { ...commentContext, comment_id: comment?.id });
+        await jira.addComment(externalSystemId, createComment(fields))
     } catch (err) {
-        // jira-client wraps response bodies in Error(JSON.stringify(body)) and
-        // can discard the HTTP status. Keep the server's diagnostic messages.
-        let responseError;
-        try {
-            responseError = JSON.parse(err.message);
-        } catch {
-            // Network and other errors may not contain a JSON response body.
-        }
-        console.error('jira_comment_failed', {
-            ...commentContext,
-            error: err.name,
-            code: err.code,
-            statusCode: err.statusCode ?? responseError?.statusCode ?? responseError?.status,
-            jiraErrorMessages: Array.isArray(responseError?.errorMessages)
-                ? responseError.errorMessages.filter(message => typeof message === 'string')
-                : undefined
-        });
-        // Let the message handler also record the failed stage and Slack API errors.
-        throw err;
+        console.log("Error creating comment in jira", err)
     }
 }
 
