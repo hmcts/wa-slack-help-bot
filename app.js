@@ -765,28 +765,55 @@ function convertProfileToName(profile) {
     return name || profile.email;
 }
 
-app.event('message', async ({ event, context, client, say }) => {
+app.event('message', async ({ event, body, context, client, say }) => {
+    const logContext = {
+        event_id: body.event_id,
+        app_id: body.api_app_id,
+        channel: event.channel,
+        configured_channel: reportChannelId,
+        thread_ts: event.thread_ts,
+        message_ts: event.ts,
+        subtype: event.subtype,
+        bot_id: event.bot_id,
+        bot_user_id: context.botUserId,
+        has_user: Boolean(event.user),
+        has_text: typeof event.text === 'string'
+    };
+    console.log('slack_reply_received', logContext);
+
     let jiraId;
+    let stage = 'filter_message';
     try {
         // Forward new human replies, excluding bot messages and edit/delete events.
-        if (event.bot_id || !event.user || typeof event.text !== 'string' ||
-            (event.subtype && !['file_share', 'thread_broadcast'].includes(event.subtype))) {
+        let skipReason;
+        if (event.bot_id) skipReason = 'bot_message';
+        else if (!event.user) skipReason = 'missing_user';
+        else if (typeof event.text !== 'string') skipReason = 'missing_text';
+        else if (event.subtype && !['file_share', 'thread_broadcast'].includes(event.subtype)) skipReason = 'unsupported_subtype';
+        else if (event.channel !== reportChannelId) skipReason = 'wrong_channel';
+        else if (!event.thread_ts || event.ts === event.thread_ts) skipReason = 'not_thread_reply';
+
+        if (skipReason) {
+            console.log('slack_reply_skipped', { ...logContext, reason: skipReason });
             return;
         }
         // filter unwanted channels in case someone invites the bot to it
         // and only look at threaded messages
         if (event.channel === reportChannelId && event.thread_ts && event.ts !== event.thread_ts) {
+            stage = 'get_permalink';
             const slackLink = (await client.chat.getPermalink({
                 channel: event.channel,
                 'message_ts': event.thread_ts
             })).permalink
 
+            stage = 'get_author_profile';
             const user = (await client.users.profile.get({
                 user: event.user
             }))
 
             const name = convertProfileToName(user.profile);
 
+            stage = 'get_thread';
             const helpRequestMessages = (await client.conversations.replies({
                 channel: event.channel,
                 ts: event.thread_ts,
@@ -794,9 +821,20 @@ app.event('message', async ({ event, context, client, say }) => {
             })).messages
 
             if (helpRequestMessages.length > 0) {
+                console.log('slack_reply_parent_found', {
+                    ...logContext,
+                    parent_ts: helpRequestMessages[0].ts,
+                    block_count: helpRequestMessages[0].blocks?.length
+                });
+                stage = 'extract_jira_id';
                 jiraId = extractJiraIdFromBlocks(helpRequestMessages[0].blocks)
-                if (jiraId === 'undefined') return;
+                if (jiraId === 'undefined') {
+                    console.warn('slack_reply_skipped', { ...logContext, reason: 'jira_key_not_found' });
+                    return;
+                }
+                console.log('slack_reply_ticket_identified', { ...logContext, jiraId });
 
+                stage = 'resolve_mentions';
                 const groupRegex = /<!subteam\^.+\|([^>.]+)>/g
                 const usernameRegex = /<@([^>.]+)>/g
 
@@ -809,23 +847,23 @@ app.event('message', async ({ event, context, client, say }) => {
                     return `@${convertProfileToName(user.profile)}`
                 });
 
+                stage = 'write_jira_comment';
                 await addCommentToHelpRequest(jiraId, {
                     slackLink,
                     name,
                     message: newTargetText
-                })
+                }, logContext)
             } else {
-                // either need to implement pagination or find a better way to get the first message in the thread
-                console.warn("Could not find jira ID, possibly thread is longer than 200 messages, TODO implement pagination");
+                console.warn('slack_reply_skipped', { ...logContext, reason: 'thread_parent_not_found' });
             }
         }
     } catch (error) {
         console.error('Unable to post Slack thread comment to Jira', {
-            channel: event.channel,
-            thread_ts: event.thread_ts,
-            message_ts: event.ts,
+            ...logContext,
+            stage,
             jiraId,
-            error: error.message,
+            error: error.name,
+            code: error.code,
             statusCode: error.statusCode,
             slackError: error.data?.error
         });
